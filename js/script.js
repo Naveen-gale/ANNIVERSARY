@@ -1,33 +1,53 @@
-﻿$(function () {
+﻿$(document).ready(function () {
 
-    $('#fullpage-s').fullpage();
+  // Check fullpage loaded
+  if (!$.fn.fullpage) {
+    console.error("fullPage.js not loaded");
+    return;
+  }
 
-    const audio = document.getElementById("bg-audio");
+  // Init fullpage
+  $('#fullpage-s').fullpage({
+    navigation: true,
+    scrollingSpeed: 700
+  });
 
-    // Try auto-play muted
-    audio.play().then(() => {
-        console.log("Autoplay started (muted)");
-    }).catch(err => {
-        console.log("Autoplay blocked:", err);
-    });
+  const audio = document.getElementById("bg-audio");
+  const btn = document.querySelector(".btn-music");
 
-    // On first user interaction, unmute and continue
-    document.addEventListener("click", function autoUnmute() {
-        audio.muted = false;
-        audio.play();
-        console.log("Music unmuted and playing");
-        document.removeEventListener("click", autoUnmute);
-    });
+  audio.muted = true;
+  audio.volume = 0.8;
 
-    // Music button toggle
-    $(document).on("click", ".btn-music", function () {
-        if (audio.paused) {
-            audio.play();
-            $(this).removeClass("paused");
-        } else {
-            audio.pause();
-            $(this).addClass("paused");
-        }
-    });
+  // Try autoplay (muted)
+  audio.play().then(() => {
+    console.log("Music started muted");
+  }).catch(() => {
+    console.log("Waiting for user interaction");
+  });
+
+  // First interaction enables sound
+  function enableSound() {
+    audio.muted = false;
+    audio.play();
+    btn.classList.remove("paused");
+    document.removeEventListener("click", enableSound);
+    document.removeEventListener("touchstart", enableSound);
+  }
+
+  document.addEventListener("click", enableSound);
+  document.addEventListener("touchstart", enableSound);
+
+  // Button toggle
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation(); // stop conflict with enableSound
+
+    if (audio.paused) {
+      audio.play();
+      btn.classList.remove("paused");
+    } else {
+      audio.pause();
+      btn.classList.add("paused");
+    }
+  });
 
 });
